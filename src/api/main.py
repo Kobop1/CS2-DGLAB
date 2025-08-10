@@ -37,6 +37,8 @@ class AppState:
         self.strength_a = 0
         self.strength_b = 0
         self.qrcode_path = ""
+        self.max_strength_A = 0
+        self.max_strength_B = 0
         self.health = 100
         self.player_status = "正常"
         self.round_status = "准备中"
@@ -89,6 +91,8 @@ async def get_status():
     return {
         "strength_a": state.strength_a,
         "strength_b": state.strength_b,
+        "max_strength_A": state.max_strength_A,
+        "max_strength_B": state.max_strength_B,
         "health": state.health,
         "player_status": state.player_status,
         "round_status": state.round_status,
@@ -131,7 +135,6 @@ async def close_window():
     return {"status": "error", "message": "No window found"}
 
 # 启动后台任务
-# 启动后台任务
 async def start_background_tasks():
     """启动所有后台任务"""
     # 初始化DGLab控制器
@@ -166,7 +169,7 @@ async def start_background_tasks():
         print(f"CS2路径处理警告: {e}")
     
     # 启动游戏状态监听器
-    state.game_listener = GameStateListener(config, state.dglab.queue)
+    state.game_listener = GameStateListener(config, state.dglab.queue,state.dglab)
     await state.game_listener.start()
     # 启动强度监控任务
     async def monitor_strength():
@@ -175,19 +178,23 @@ async def start_background_tasks():
                 # 更新强度数据
                 state.strength_a = state.dglab.current_strength_A
                 state.strength_b = state.dglab.current_strength_B
-                
+                state.max_strength_A = state.dglab.max_strength_A
+                state.max_strength_B = state.dglab.max_strength_B
                 # 更新游戏状态
                 if state.game_listener:
                     state.health = state.game_listener.health
                     state.player_status = state.game_listener.player_status
                     state.round_status = state.game_listener.round_status
-                
-                # 广播更新
+
                 await broadcast({
                     "type": "status_update",
                     "strength": {
                         "a": state.strength_a,
                         "b": state.strength_b
+                    },
+                    "max_strength": {
+                        "a": state.max_strength_A,
+                        "b": state.max_strength_B
                     },
                     "game": {
                         "health": state.health,

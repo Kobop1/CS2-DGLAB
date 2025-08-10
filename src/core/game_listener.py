@@ -2,13 +2,14 @@ from aiohttp import web
 import asyncio
 
 class GameStateListener:
-    def __init__(self, config_manager, command_queue):
+    def __init__(self, config_manager, command_queue,dglab_controller):
         self.config = config_manager
         self.command_queue = command_queue
         self.health = 0  # 初始血量
         self.app = self._create_app()
         self.player_status = "正常"
         self.round_status = "准备中"
+        self.dglab_controller = dglab_controller
 
     def _create_app(self):
         """创建HTTP应用"""
@@ -87,12 +88,17 @@ class GameStateListener:
             self.health = now_health
 
     async def _handle_health_change(self, new_health):
-        """处理血量减少事件"""
-        # 计算强度变化
         health_loss = self.health - new_health
-        strength_a = int(health_loss * self.config.hit_strength)
-        strength_b = int(health_loss * self.config.hit_strength)
+        base_ratio = int(health_loss * self.config.hit_strength)  # 这是相对比例（如18）
 
+        # 2. 按设备最大强度转换为实际值（比例映射：18% 对应 最大强度的 18%）
+        # 例如：最大强度A为200时，18% → 36；最大强度A为100时，18% → 18
+        strength_a = int(base_ratio * self.dglab_controller.max_strength_A / 100)
+        strength_b = int(base_ratio * self.dglab_controller.max_strength_B / 100)
+
+        # 3. 确保强度不超过最大限制（避免计算误差）
+        strength_a = min(strength_a, self.dglab_controller.max_strength_A)
+        strength_b = min(strength_b, self.dglab_controller.max_strength_B)
         # 发送受伤振动
         await self.command_queue.put({
             "type": "pluse", 
