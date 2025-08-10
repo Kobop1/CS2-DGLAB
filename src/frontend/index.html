@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS2&DGLab 控制中心</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36CFC9',
+                        danger: '#F53F3F',
+                        warning: '#FF7D00',
+                        dark: '#1D2129',
+                        light: '#F2F3F5'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .sidebar-item {
+                @apply flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-primary/10 hover:text-primary rounded-lg transition-all duration-200 cursor-pointer;
+            }
+            .sidebar-item.active {
+                @apply bg-primary/10 text-primary font-medium;
+            }
+            .card {
+                @apply bg-white rounded-xl shadow-sm border border-gray-100 p-5;
+            }
+            .progress-bar {
+                @apply h-2 bg-gray-100 rounded-full overflow-hidden;
+            }
+            .progress-value {
+                @apply h-full bg-primary rounded-full transition-all duration-300;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex overflow-hidden">
+    <div class="flex h-screen w-full overflow-hidden">
+        <!-- 侧边栏 -->
+        <div class="w-64 bg-white border-r border-gray-200 flex flex-col">
+            <div class="p-5 border-b border-gray-200">
+                <h1 class="text-xl font-bold text-primary flex items-center gap-2">
+                    <i class="fa fa-gamepad"></i>
+                    <span>CS2&DGLab</span>
+                </h1>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-3">
+                <div class="sidebar-item active" data-section="status">
+                    <i class="fa fa-tachometer"></i>
+                    <span>设备状态</span>
+                </div>
+                <div class="sidebar-item" data-section="config">
+                    <i class="fa fa-cog"></i>
+                    <span>参数配置</span>
+                </div>
+                <div class="sidebar-item" data-section="connection">
+                    <i class="fa fa-qrcode"></i>
+                    <span>设备连接</span>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t border-gray-200">
+                <div class="flex items-center gap-3 text-sm text-gray-500">
+                    <i class="fa fa-info-circle"></i>
+                    <span>版本 0.1.0</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主内容区 -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- 顶部导航 -->
+            <header class="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-6">
+                <h2 class="text-lg font-semibold" id="section-title">设备状态</h2>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm">
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                        <span id="connection-status">未连接</span>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 内容区域 -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <!-- 设备状态 section -->
+                <section id="status-section">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- 通道强度卡片 -->
+                        <div class="card">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                                <i class="fa fa-signal text-primary"></i>
+                                通道强度
+                            </h3>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <div class="flex justify-between mb-2">
+                                        <span class="text-sm font-medium">通道 A</span>
+                                        <span class="text-sm text-gray-500" id="strength-a-value">0</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-value" id="strength-a-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <div class="flex justify-between mb-2">
+                                        <span class="text-sm font-medium">通道 B</span>
+                                        <span class="text-sm text-gray-500" id="strength-b-value">0</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-value" id="strength-b-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 游戏状态卡片 -->
+                        <div class="card">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                                <i class="fa fa-gamepad text-primary"></i>
+                                游戏状态
+                            </h3>
+                            
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-sm">当前血量</span>
+                                    <span class="font-medium" id="health-status">100</span>
+                                </div>
+                                
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-sm">状态</span>
+                                    <span class="font-medium" id="player-status">正常</span>
+                                </div>
+                                
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span class="text-sm">回合状态</span>
+                                    <span class="font-medium" id="round-status">准备中</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 配置 section -->
+                <section id="config-section" class="hidden">
+                    <div class="card max-w-2xl">
+                        <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                            <i class="fa fa-cog text-primary"></i>
+                            参数配置
+                        </h3>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">血量强度百分比</label>
+                                <div class="flex items-center gap-3">
+                                    <input type="number" id="hit-strength" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" min="1" max="100">
+                                    <span>%</span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">声音控制 A 通道</label>
+                                <input type="number" id="voice-a" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" min="0" max="100">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">声音控制 B 通道</label>
+                                <input type="number" id="voice-b" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" min="0" max="100">
+                            </div>
+                            
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="is-voice" class="w-4 h-4 text-primary focus:ring-primary/50 border-gray-300 rounded">
+                                <label for="is-voice" class="text-sm">启用声音控制</label>
+                            </div>
+                            
+                            <button id="save-config" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2">
+                                <i class="fa fa-save"></i>
+                                <span>保存配置</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- 连接 section -->
+                <section id="connection-section" class="hidden">
+                    <div class="card max-w-md mx-auto">
+                        <h3 class="text-lg font-semibold mb-6 text-center">设备连接</h3>
+                        
+                        <div class="flex flex-col items-center">
+                            <div id="qrcode-container" class="mb-6 p-4 bg-white border border-gray-200 rounded-lg">
+                                <img id="qrcode-image" src="" alt="DGLab连接二维码" class="max-w-full h-auto">
+                            </div>
+                            
+                            <p class="text-sm text-gray-500 text-center mb-4">
+                                使用DG-Lab App扫描上方二维码进行连接
+                            </p>
+                            
+                            <button id="refresh-qrcode" class="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 transition-all flex items-center gap-2">
+                                <i class="fa fa-refresh"></i>
+                                <span>刷新二维码</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // 页面元素
+        const sidebarItems = document.querySelectorAll('.sidebar-item');
+        const sections = document.querySelectorAll('main section');
+        const sectionTitle = document.getElementById('section-title');
+        const strengthAValue = document.getElementById('strength-a-value');
+        const strengthABar = document.getElementById('strength-a-bar');
+        const strengthBValue = document.getElementById('strength-b-value');
+        const strengthBBar = document.getElementById('strength-b-bar');
+        const connectionStatus = document.getElementById('connection-status');
+        const healthStatus = document.getElementById('health-status');
+        const playerStatus = document.getElementById('player-status');
+        const roundStatus = document.getElementById('round-status');
+        const qrcodeImage = document.getElementById('qrcode-image');
+        const refreshQrcodeBtn = document.getElementById('refresh-qrcode');
+        const saveConfigBtn = document.getElementById('save-config');
+        
+        // 侧边栏切换
+        sidebarItems.forEach(item => {
+            item.addEventListener('click', () => {
+                // 移除所有active类
+                sidebarItems.forEach(i => i.classList.remove('active'));
+                // 给当前点击项添加active类
+                item.classList.add('active');
+                
+                // 获取要显示的section
+                const sectionId = item.getAttribute('data-section') + '-section';
+                // 隐藏所有section
+                sections.forEach(section => section.classList.add('hidden'));
+                // 显示目标section
+                document.getElementById(sectionId).classList.remove('hidden');
+                // 更新标题
+                sectionTitle.textContent = item.querySelector('span').textContent;
+            });
+        });
+        
+        // WebSocket连接
+        let ws;
+        function connectWebSocket() {
+            // 获取当前页面的主机和端口
+            const host = window.location.host;
+            ws = new WebSocket(`ws://${host}/ws`);
+            
+            ws.onopen = () => {
+                console.log('WebSocket连接已建立');
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWebSocketData(data);
+            };
+            
+            ws.onclose = () => {
+                console.log('WebSocket连接已关闭，正在重连...');
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket错误:', error);
+            };
+        }
+        
+        // 处理WebSocket数据
+        function handleWebSocketData(data) {
+            if (data.type === 'status_update') {
+                // 更新强度显示
+                strengthAValue.textContent = data.strength.a;
+                strengthABar.style.width = `${data.strength.a}%`;
+                strengthBValue.textContent = data.strength.b;
+                strengthBBar.style.width = `${data.strength.b}%`;
+                
+                // 更新游戏状态
+                healthStatus.textContent = data.game.health;
+                playerStatus.textContent = data.game.player_status;
+                roundStatus.textContent = data.game.round_status;
+                
+                // 更新连接状态
+                connectionStatus.textContent = data.connected ? '已连接' : '未连接';
+            }
+        }
+        
+        // 加载配置
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+                
+                document.getElementById('hit-strength').value = config.hit;
+                document.getElementById('voice-a').value = config.voice_A;
+                document.getElementById('voice-b').value = config.voice_B;
+                document.getElementById('is-voice').checked = config.is_voice === 1;
+            } catch (error) {
+                console.error('加载配置失败:', error);
+            }
+        }
+        
+        // 保存配置
+        saveConfigBtn.addEventListener('click', async () => {
+            try {
+                const hitStrength = document.getElementById('hit-strength').value;
+                const voiceA = document.getElementById('voice-a').value;
+                const voiceB = document.getElementById('voice-b').value;
+                const isVoice = document.getElementById('is-voice').checked ? 1 : 0;
+                
+                // 更新hit
+                await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: 'hit', value: hitStrength })
+                });
+                
+                // 更新voice_A
+                await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: 'voice_A', value: voiceA })
+                });
+                
+                // 更新voice_B
+                await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: 'voice_B', value: voiceB })
+                });
+                
+                // 更新is_voice
+                await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: 'is_voice', value: isVoice })
+                });
+                
+                // 显示成功提示
+                alert('配置保存成功');
+            } catch (error) {
+                console.error('保存配置失败:', error);
+                alert('保存配置失败');
+            }
+        });
+        
+        // 加载二维码
+        async function loadQrcode() {
+            try {
+                const response = await fetch('/api/qrcode');
+                const data = await response.json();
+                qrcodeImage.src = data.qrcode_path + '?t=' + new Date().getTime(); // 加时间戳防止缓存
+            } catch (error) {
+                console.error('加载二维码失败:', error);
+            }
+        }
+        
+        // 刷新二维码
+        refreshQrcodeBtn.addEventListener('click', loadQrcode);
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', () => {
+            connectWebSocket();
+            loadConfig();
+            loadQrcode();
+            
+            // 定期获取状态更新
+            setInterval(async () => {
+                try {
+                    const response = await fetch('/api/status');
+                    const status = await response.json();
+                    connectionStatus.textContent = status.connected ? '已连接' : '未连接';
+                } catch (error) {
+                    console.error('获取状态失败:', error);
+                }
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
+    

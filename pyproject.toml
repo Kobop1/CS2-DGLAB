@@ -1,0 +1,31 @@
+[project]
+name = "cs2_dglab"
+version = "0.1.0"
+description = "哦齁"
+authors = [
+  { name = "kobopi", email = "kobopi@qq.com" }
+]
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+dependencies = [
+  "aiohttp>=3.9.0",
+  "pydglab-ws>=0.1.0",
+  "qrcode>=7.4.2",
+  "Pillow>=10.1.0",
+  "numpy>=1.26.2",
+  "fastapi>=0.104.1",
+  "uvicorn>=0.24.0",
+  "websockets>=12.0",
+  "python-multipart>=0.0.6",
+  "pywebview>=4.4.1"
+]
+
+
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv]
+prerelease = "disallow"
