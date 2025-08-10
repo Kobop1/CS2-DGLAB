@@ -38,9 +38,9 @@
 
 4. 运行应用：
    ```bash
-   uv run cs2dglab
+   uv run python -m src.desktop
    ```
-
+他妈的uv一直配置不上，真傻逼
 ## 使用方法
 
 1. 启动应用后，会自动打开控制界面

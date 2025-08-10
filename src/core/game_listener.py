@@ -54,29 +54,29 @@ class GameStateListener:
         # 更新状态显示
         self._update_status_text(now_health, flash, smoke, burning, data)
 
-        # 处理血量变化
-        if now_health < self.health:
+        # 处理血量变化（受伤效果）
+        if now_health < self.health and self.config.get("enable_hit", 1) == 1:
             await self._handle_health_change(now_health)
         
-        # 处理异常状态
-        if flash > 0:
+        # 处理异常状态（添加开关判断）
+        if flash > 0 and self.config.get("enable_flash", 1) == 1:
             await self.command_queue.put({
                 "type": "pluse", 
                 "data": self.config.pulse_data["傻瓜蛋"]
             })
-        if smoke > 0:
+        if smoke > 0 and self.config.get("enable_smoke", 1) == 1:
             await self.command_queue.put({
                 "type": "pluse", 
                 "data": self.config.pulse_data["烟雾弹"]
             })
-        if burning > 0:
+        if burning > 0 and self.config.get("enable_burn", 1) == 1:
             await self.command_queue.put({
                 "type": "pluse", 
                 "data": self.config.pulse_data["烧伤"]
             })
 
-        # 处理死亡状态
-        if now_health == 0 and self.health > 0:
+        # 处理死亡状态（添加开关判断）
+        if now_health == 0 and self.health > 0 and self.config.get("enable_death", 1) == 1:
             await self.command_queue.put({
                 "type": "pluse", 
                 "data": self.config.pulse_data["死亡"]
@@ -87,17 +87,6 @@ class GameStateListener:
             self.health = 100  # 重置血量
         else:
             self.health = now_health
-
-        # 处理回合结束
-        if "round" in data and data["round"]["phase"] == "over":
-            await self.command_queue.put({"type": "strlse", "data": 100})
-            self.round_status = "回合结束"
-        elif "round" in data:
-            self.round_status = data["round"]["phase"]
-
-        # 处理游戏结束
-        if data["map"]["phase"] == "gameover":
-            await self.command_queue.put({"type": "strlse", "data": 100})
 
     async def _handle_health_change(self, new_health):
         """处理血量减少事件"""

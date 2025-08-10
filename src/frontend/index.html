@@ -19,6 +19,7 @@
                         secondary: '#36CFC9',
                         danger: '#F53F3F',
                         warning: '#FF7D00',
+                        success: '#00B42A',
                         dark: '#1D2129',
                         light: '#F2F3F5'
                     },
@@ -42,7 +43,7 @@
                 @apply bg-primary/10 text-primary font-medium;
             }
             .card {
-                @apply bg-white rounded-xl shadow-sm border border-gray-100 p-5;
+                @apply bg-white rounded-xl shadow-sm border border-gray-100 p-5 transition-all duration-300 hover:shadow-md;
             }
             .progress-bar {
                 @apply h-2 bg-gray-100 rounded-full overflow-hidden;
@@ -50,16 +51,34 @@
             .progress-value {
                 @apply h-full bg-primary rounded-full transition-all duration-300;
             }
+            .switch {
+                @apply relative inline-block w-10 h-5;
+            }
+            .switch input {
+                @apply opacity-0 w-0 h-0;
+            }
+            .slider {
+                @apply absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-300 rounded-full transition-all duration-300;
+            }
+            .slider:before {
+                @apply absolute content-[''] h-4 w-4 left-0.5 bottom-0.5 bg-white rounded-full transition-all duration-300;
+            }
+            input:checked + .slider {
+                @apply bg-primary;
+            }
+            input:checked + .slider:before {
+                @apply transform translate-x-5;
+            }
         }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex overflow-hidden">
     <div class="flex h-screen w-full overflow-hidden">
         <!-- 侧边栏 -->
-        <div class="w-64 bg-white border-r border-gray-200 flex flex-col">
+        <div class="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm z-10">
             <div class="p-5 border-b border-gray-200">
                 <h1 class="text-xl font-bold text-primary flex items-center gap-2">
-                    <i class="fa fa-gamepad"></i>
+                    <i class="fa fa-gamepad text-xl"></i>
                     <span>CS2&DGLab</span>
                 </h1>
             </div>
@@ -72,6 +91,10 @@
                 <div class="sidebar-item" data-section="config">
                     <i class="fa fa-cog"></i>
                     <span>参数配置</span>
+                </div>
+                <div class="sidebar-item" data-section="effects">
+                    <i class="fa fa-magic"></i>
+                    <span>效果开关</span>
                 </div>
                 <div class="sidebar-item" data-section="connection">
                     <i class="fa fa-qrcode"></i>
@@ -90,21 +113,21 @@
         <!-- 主内容区 -->
         <div class="flex-1 flex flex-col overflow-hidden">
             <!-- 顶部导航 -->
-            <header class="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-6">
+            <header class="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-6 shadow-sm">
                 <h2 class="text-lg font-semibold" id="section-title">设备状态</h2>
                 <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm">
-                        <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-sm">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                         <span id="connection-status">未连接</span>
                     </div>
                 </div>
             </header>
             
             <!-- 内容区域 -->
-            <main class="flex-1 overflow-y-auto p-6">
+            <main class="flex-1 overflow-y-auto p-6 bg-gray-50">
                 <!-- 设备状态 section -->
                 <section id="status-section">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <!-- 通道强度卡片 -->
                         <div class="card">
                             <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -115,7 +138,9 @@
                             <div class="space-y-6">
                                 <div>
                                     <div class="flex justify-between mb-2">
-                                        <span class="text-sm font-medium">通道 A</span>
+                                        <span class="text-sm font-medium flex items-center gap-1.5">
+                                            <i class="fa fa-plug text-primary/70"></i>通道 A
+                                        </span>
                                         <span class="text-sm text-gray-500" id="strength-a-value">0</span>
                                     </div>
                                     <div class="progress-bar">
@@ -125,7 +150,9 @@
                                 
                                 <div>
                                     <div class="flex justify-between mb-2">
-                                        <span class="text-sm font-medium">通道 B</span>
+                                        <span class="text-sm font-medium flex items-center gap-1.5">
+                                            <i class="fa fa-plug text-primary/70"></i>通道 B
+                                        </span>
                                         <span class="text-sm text-gray-500" id="strength-b-value">0</span>
                                     </div>
                                     <div class="progress-bar">
@@ -143,36 +170,68 @@
                             </h3>
                             
                             <div class="space-y-4">
-                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <span class="text-sm">当前血量</span>
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                    <span class="text-sm flex items-center gap-1.5">
+                                        <i class="fa fa-heartbeat text-danger/70"></i>当前血量
+                                    </span>
                                     <span class="font-medium" id="health-status">100</span>
                                 </div>
                                 
-                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <span class="text-sm">状态</span>
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                    <span class="text-sm flex items-center gap-1.5">
+                                        <i class="fa fa-user text-warning/70"></i>状态
+                                    </span>
                                     <span class="font-medium" id="player-status">正常</span>
                                 </div>
                                 
-                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <span class="text-sm">回合状态</span>
+                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                    <span class="text-sm flex items-center gap-1.5">
+                                        <i class="fa fa-refresh text-success/70"></i>回合状态
+                                    </span>
                                     <span class="font-medium" id="round-status">准备中</span>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- 设备信息卡片 -->
+                    <div class="card">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <i class="fa fa-info-circle text-primary"></i>
+                            设备信息
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <div class="text-sm text-gray-500 mb-1">连接状态</div>
+                                <div class="font-medium flex items-center gap-1.5">
+                                    <span id="device-connection-status">未连接</span>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <div class="text-sm text-gray-500 mb-1">最大强度 A</div>
+                                <div class="font-medium" id="max-strength-a">--</div>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <div class="text-sm text-gray-500 mb-1">最大强度 B</div>
+                                <div class="font-medium" id="max-strength-b">--</div>
+                            </div>
+                        </div>
+                    </div>
                 </section>
                 
-                <!-- 配置 section -->
+                <!-- 参数配置 section -->
                 <section id="config-section" class="hidden">
                     <div class="card max-w-2xl">
                         <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
-                            <i class="fa fa-cog text-primary"></i>
+                            <i class="fa fa-sliders text-primary"></i>
                             参数配置
                         </h3>
                         
                         <div class="space-y-6">
                             <div>
-                                <label class="block text-sm font-medium mb-2">血量强度百分比</label>
+                                <label class="block text-sm font-medium mb-2 flex items-center gap-1.5">
+                                    <i class="fa fa-percent text-primary/70"></i>血量强度百分比
+                                </label>
                                 <div class="flex items-center gap-3">
                                     <input type="number" id="hit-strength" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" min="1" max="100">
                                     <span>%</span>
@@ -180,18 +239,24 @@
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium mb-2">声音控制 A 通道</label>
+                                <label class="block text-sm font-medium mb-2 flex items-center gap-1.5">
+                                    <i class="fa fa-volume-up text-primary/70"></i>声音控制 A 通道
+                                </label>
                                 <input type="number" id="voice-a" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" min="0" max="100">
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium mb-2">声音控制 B 通道</label>
+                                <label class="block text-sm font-medium mb-2 flex items-center gap-1.5">
+                                    <i class="fa fa-volume-up text-primary/70"></i>声音控制 B 通道
+                                </label>
                                 <input type="number" id="voice-b" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" min="0" max="100">
                             </div>
                             
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
                                 <input type="checkbox" id="is-voice" class="w-4 h-4 text-primary focus:ring-primary/50 border-gray-300 rounded">
-                                <label for="is-voice" class="text-sm">启用声音控制</label>
+                                <label for="is-voice" class="text-sm flex items-center gap-1.5">
+                                    <i class="fa fa-microphone text-primary/70"></i>启用声音控制
+                                </label>
                             </div>
                             
                             <button id="save-config" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2">
@@ -202,13 +267,83 @@
                     </div>
                 </section>
                 
+                <!-- 效果开关 section -->
+                <section id="effects-section" class="hidden">
+                    <div class="card max-w-2xl">
+                        <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                            <i class="fa fa-magic text-primary"></i>
+                            效果开关配置
+                        </h3>
+                        
+                        <div class="space-y-5">
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <label class="text-sm flex items-center gap-1.5 cursor-pointer">
+                                    <i class="fa fa-heartbeat text-danger/70"></i>受伤振动反馈
+                                </label>
+                                <label class="switch">
+                                    <input type="checkbox" id="enable-hit">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <label class="text-sm flex items-center gap-1.5 cursor-pointer">
+                                    <i class="fa fa-bolt text-warning/70"></i>闪光弹效果
+                                </label>
+                                <label class="switch">
+                                    <input type="checkbox" id="enable-flash">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <label class="text-sm flex items-center gap-1.5 cursor-pointer">
+                                    <i class="fa fa-fire text-danger/70"></i>燃烧弹效果
+                                </label>
+                                <label class="switch">
+                                    <input type="checkbox" id="enable-burn">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <label class="text-sm flex items-center gap-1.5 cursor-pointer">
+                                    <i class="fa fa-cloud text-gray-500"></i>烟雾弹效果
+                                </label>
+                                <label class="switch">
+                                    <input type="checkbox" id="enable-smoke">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <label class="text-sm flex items-center gap-1.5 cursor-pointer">
+                                    <i class="fa fa-tombstone text-gray-700"></i>死亡效果
+                                </label>
+                                <label class="switch">
+                                    <input type="checkbox" id="enable-death">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            
+                            <button id="save-effects" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2">
+                                <i class="fa fa-save"></i>
+                                <span>保存效果配置</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+                
                 <!-- 连接 section -->
                 <section id="connection-section" class="hidden">
                     <div class="card max-w-md mx-auto">
-                        <h3 class="text-lg font-semibold mb-6 text-center">设备连接</h3>
+                        <h3 class="text-lg font-semibold mb-6 text-center flex items-center justify-center gap-2">
+                            <i class="fa fa-qrcode text-primary"></i>
+                            设备连接
+                        </h3>
                         
                         <div class="flex flex-col items-center">
-                            <div id="qrcode-container" class="mb-6 p-4 bg-white border border-gray-200 rounded-lg">
+                            <div id="qrcode-container" class="mb-6 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
                                 <img id="qrcode-image" src="" alt="DGLab连接二维码" class="max-w-full h-auto">
                             </div>
                             
@@ -237,12 +372,14 @@
         const strengthBValue = document.getElementById('strength-b-value');
         const strengthBBar = document.getElementById('strength-b-bar');
         const connectionStatus = document.getElementById('connection-status');
+        const deviceConnectionStatus = document.getElementById('device-connection-status');
         const healthStatus = document.getElementById('health-status');
         const playerStatus = document.getElementById('player-status');
         const roundStatus = document.getElementById('round-status');
         const qrcodeImage = document.getElementById('qrcode-image');
         const refreshQrcodeBtn = document.getElementById('refresh-qrcode');
         const saveConfigBtn = document.getElementById('save-config');
+        const saveEffectsBtn = document.getElementById('save-effects');
         
         // 侧边栏切换
         sidebarItems.forEach(item => {
@@ -281,6 +418,8 @@
             
             ws.onclose = () => {
                 console.log('WebSocket连接已关闭，正在重连...');
+                connectionStatus.textContent = '连接断开';
+                deviceConnectionStatus.textContent = '连接断开';
                 setTimeout(connectWebSocket, 3000);
             };
             
@@ -304,26 +443,36 @@
                 roundStatus.textContent = data.game.round_status;
                 
                 // 更新连接状态
-                connectionStatus.textContent = data.connected ? '已连接' : '未连接';
+                const isConnected = data.connected;
+                connectionStatus.textContent = isConnected ? '已连接' : '未连接';
+                deviceConnectionStatus.textContent = isConnected ? '已连接' : '未连接';
             }
         }
         
         // 加载配置
-        async function loadConfig() {
+        async function loadAllConfigs() {
             try {
                 const response = await fetch('/api/config');
                 const config = await response.json();
                 
+                // 加载参数配置
                 document.getElementById('hit-strength').value = config.hit;
                 document.getElementById('voice-a').value = config.voice_A;
                 document.getElementById('voice-b').value = config.voice_B;
                 document.getElementById('is-voice').checked = config.is_voice === 1;
+                
+                // 加载效果开关配置
+                document.getElementById('enable-hit').checked = config.enable_hit === 1;
+                document.getElementById('enable-flash').checked = config.enable_flash === 1;
+                document.getElementById('enable-burn').checked = config.enable_burn === 1;
+                document.getElementById('enable-smoke').checked = config.enable_smoke === 1;
+                document.getElementById('enable-death').checked = config.enable_death === 1;
             } catch (error) {
                 console.error('加载配置失败:', error);
             }
         }
         
-        // 保存配置
+        // 保存参数配置
         saveConfigBtn.addEventListener('click', async () => {
             try {
                 const hitStrength = document.getElementById('hit-strength').value;
@@ -331,39 +480,54 @@
                 const voiceB = document.getElementById('voice-b').value;
                 const isVoice = document.getElementById('is-voice').checked ? 1 : 0;
                 
-                // 更新hit
-                await fetch('/api/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key: 'hit', value: hitStrength })
-                });
+                // 批量更新配置
+                const updates = [
+                    { key: 'hit', value: hitStrength },
+                    { key: 'voice_A', value: voiceA },
+                    { key: 'voice_B', value: voiceB },
+                    { key: 'is_voice', value: isVoice }
+                ];
                 
-                // 更新voice_A
-                await fetch('/api/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key: 'voice_A', value: voiceA })
-                });
-                
-                // 更新voice_B
-                await fetch('/api/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key: 'voice_B', value: voiceB })
-                });
-                
-                // 更新is_voice
-                await fetch('/api/config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key: 'is_voice', value: isVoice })
-                });
+                for (const update of updates) {
+                    await fetch('/api/config', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(update)
+                    });
+                }
                 
                 // 显示成功提示
-                alert('配置保存成功');
+                showNotification('配置保存成功', 'success');
             } catch (error) {
                 console.error('保存配置失败:', error);
-                alert('保存配置失败');
+                showNotification('保存配置失败', 'error');
+            }
+        });
+        
+        // 保存效果开关配置
+        saveEffectsBtn.addEventListener('click', async () => {
+            try {
+                const updates = [
+                    { key: 'enable_hit', value: document.getElementById('enable-hit').checked ? 1 : 0 },
+                    { key: 'enable_flash', value: document.getElementById('enable-flash').checked ? 1 : 0 },
+                    { key: 'enable_burn', value: document.getElementById('enable-burn').checked ? 1 : 0 },
+                    { key: 'enable_smoke', value: document.getElementById('enable-smoke').checked ? 1 : 0 },
+                    { key: 'enable_death', value: document.getElementById('enable-death').checked ? 1 : 0 }
+                ];
+                
+                for (const update of updates) {
+                    await fetch('/api/config', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(update)
+                    });
+                }
+                
+                // 显示成功提示
+                showNotification('效果配置保存成功', 'success');
+            } catch (error) {
+                console.error('保存效果配置失败:', error);
+                showNotification('保存效果配置失败', 'error');
             }
         });
         
@@ -378,13 +542,51 @@
             }
         }
         
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.className = `fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 transition-all duration-300 transform translate-y-2 opacity-0`;
+            
+            // 设置样式
+            if (type === 'success') {
+                notification.classList.add('bg-success', 'text-white');
+                notification.innerHTML = `<i class="fa fa-check-circle"></i><span>${message}</span>`;
+            } else if (type === 'error') {
+                notification.classList.add('bg-danger', 'text-white');
+                notification.innerHTML = `<i class="fa fa-exclamation-circle"></i><span>${message}</span>`;
+            } else {
+                notification.classList.add('bg-primary', 'text-white');
+                notification.innerHTML = `<i class="fa fa-info-circle"></i><span>${message}</span>`;
+            }
+            
+            // 添加到页面
+            document.body.appendChild(notification);
+            
+            // 显示动画
+            setTimeout(() => {
+                notification.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+            
+            // 自动消失
+            setTimeout(() => {
+                notification.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+        
         // 刷新二维码
-        refreshQrcodeBtn.addEventListener('click', loadQrcode);
+        refreshQrcodeBtn.addEventListener('click', () => {
+            loadQrcode();
+            showNotification('正在刷新二维码...');
+        });
         
         // 页面加载完成后初始化
         window.addEventListener('load', () => {
             connectWebSocket();
-            loadConfig();
+            loadAllConfigs();
             loadQrcode();
             
             // 定期获取状态更新
@@ -393,6 +595,7 @@
                     const response = await fetch('/api/status');
                     const status = await response.json();
                     connectionStatus.textContent = status.connected ? '已连接' : '未连接';
+                    deviceConnectionStatus.textContent = status.connected ? '已连接' : '未连接';
                 } catch (error) {
                     console.error('获取状态失败:', error);
                 }
@@ -401,4 +604,3 @@
     </script>
 </body>
 </html>
-    
