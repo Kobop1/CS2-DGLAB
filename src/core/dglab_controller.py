@@ -23,8 +23,10 @@ class DGLabController:
     async def start(self):
         """启动DGLab WebSocket服务器"""
         self.server = DGLabWSServer("0.0.0.0", 5678, 60)
+        self.client = self.server.new_local_client()
+    
         async with self.server:
-            self.client = self.server.new_local_client()
+            print(f"已启动DGLab WebSocket服务器，等待客户端连接...")
             await self._handle_client()
 
     async def _handle_client(self):
@@ -71,13 +73,12 @@ class DGLabController:
         """执行振动指令"""
         if not self.client or not self.is_connected:
             return
-            
         cmd_type = cmd["type"]
         data = cmd["data"]
         
         if cmd_type == "pluse":
-            await self.client.add_pulses(Channel.A, *data)
-            await self.client.add_pulses(Channel.B, *data)
+            await self.client.add_pulses(Channel.A, *(data * 1))
+            await self.client.add_pulses(Channel.B, *(data * 1))
         elif cmd_type == "strlup":
             channel = Channel.A if cmd["chose"] == "a" else Channel.B
             await self.client.set_strength(channel, StrengthOperationType.INCREASE, data)

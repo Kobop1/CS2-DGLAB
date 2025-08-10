@@ -5,7 +5,7 @@ class GameStateListener:
     def __init__(self, config_manager, command_queue):
         self.config = config_manager
         self.command_queue = command_queue
-        self.health = 100  # 初始血量
+        self.health = 0  # 初始血量
         self.app = self._create_app()
         self.player_status = "正常"
         self.round_status = "准备中"
@@ -14,7 +14,7 @@ class GameStateListener:
         """创建HTTP应用"""
         app = web.Application()
         app["queue"] = self.command_queue
-        app.router.add_post("/", self.handle_game_state)
+        app.router.add_post("", self.handle_game_state)
         return app
 
     async def start(self, host: str = "127.0.0.1", port: int = 3000):
@@ -35,7 +35,7 @@ class GameStateListener:
             # 验证数据格式
             if "player" not in data or "map" not in data:
                 return web.json_response({"status": "error", "message": "数据格式错误"}, status=400)
-
+            
             # 处理玩家状态
             await self._process_player_state(data)
             return web.json_response({"status": "success"})
@@ -50,10 +50,8 @@ class GameStateListener:
         flash = player_data["state"]["flashed"]
         smoke = player_data["state"]["smoked"]
         burning = player_data["state"]["burning"]
-
         # 更新状态显示
         self._update_status_text(now_health, flash, smoke, burning, data)
-
         # 处理血量变化（受伤效果）
         if now_health < self.health and self.config.get("enable_hit", 1) == 1:
             await self._handle_health_change(now_health)
@@ -83,7 +81,7 @@ class GameStateListener:
             })
             await asyncio.sleep(1)
             await self.command_queue.put({"type": "strlse", "data": 100})
-            await asyncio.sleep(3)
+            await asyncio.sleep(5)
             self.health = 100  # 重置血量
         else:
             self.health = now_health

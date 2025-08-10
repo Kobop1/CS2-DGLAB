@@ -1,3 +1,4 @@
+import time
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -130,14 +131,27 @@ async def close_window():
     return {"status": "error", "message": "No window found"}
 
 # 启动后台任务
+# 启动后台任务
 async def start_background_tasks():
     """启动所有后台任务"""
     # 初始化DGLab控制器
     ip_address = get_local_ip()
     state.dglab = DGLabController(ip_address)
     
+    # 启动DGLab服务
+    asyncio.create_task(state.dglab.start())
+    # 等待客户端连接建立
+    retry_count = 0
+    while retry_count < 30 and not state.dglab.client:  # 等待最多3秒
+        await asyncio.sleep(0.1)
+        retry_count += 1
+    
     # 生成二维码
-    qrcode_url = state.dglab.client.get_qrcode(ip_address) if state.dglab.client else ip_address
+    if state.dglab.client:
+        qrcode_url = state.dglab.client.get_qrcode(ip_address)
+    else:
+        qrcode_url = ip_address
+    
     state.qrcode_path = generate_qrcode(qrcode_url, "src/frontend/temp_qrcode.png")
     
     # 查找CS2路径并配置
@@ -154,7 +168,6 @@ async def start_background_tasks():
     # 启动游戏状态监听器
     state.game_listener = GameStateListener(config, state.dglab.queue)
     await state.game_listener.start()
-    
     # 启动强度监控任务
     async def monitor_strength():
         while True:
@@ -185,9 +198,9 @@ async def start_background_tasks():
                 })
             await asyncio.sleep(0.1)
     
-    # 启动DGLab服务和监控任务
+    # 启动监控任务
     asyncio.create_task(monitor_strength())
-    asyncio.create_task(state.dglab.start())
+    
 
 # 启动事件
 @app.on_event("startup")

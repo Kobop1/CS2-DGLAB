@@ -4,8 +4,6 @@ import uvicorn
 from src.api.main import app
 import multiprocessing
 import os
-import sys
-print("模块搜索路径：", sys.path)
 def run_server():
     """在单独线程中运行FastAPI服务器"""
     frontend_dir = os.path.join(os.path.dirname(__file__), 'frontend')
@@ -26,13 +24,14 @@ def start_desktop_app():
     
     # 配置窗口
     window_options = {
-        "title": "CS2&DGLab 控制中心",
+        "title": "CS2&DGLab",
         "width": 1024,
         "height": 768,
         "resizable": True,
         "min_size": (800, 600),
         "frameless": True,
         "easy_drag": True 
+        
     }
     
     # 创建窗口并加载本地页面
