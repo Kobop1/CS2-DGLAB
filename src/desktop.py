@@ -30,7 +30,9 @@ def start_desktop_app():
         "width": 1024,
         "height": 768,
         "resizable": True,
-        "min_size": (800, 600)
+        "min_size": (800, 600),
+        "frameless": True,
+        "easy_drag": True 
     }
     
     # 创建窗口并加载本地页面

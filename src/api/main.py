@@ -10,6 +10,8 @@ from src.utils.qrcode import generate_qrcode
 from src.utils.cs2_path import find_cs2_install_path, setup_cs2_gamestate_cfg
 import json
 from pydantic import BaseModel
+from typing import Any
+import webview
 
 app = FastAPI(title="CS2&DGLab 控制中心")
 
@@ -40,13 +42,27 @@ class AppState:
 
 state = AppState()
 
+# 窗口控制API类
+class WindowApi:
+    def minimize_window(self):
+        """最小化窗口"""
+        if webview.windows:
+            webview.windows[0].minimize()
+        return {"status": "success"}
+    
+    def close_window(self):
+        """关闭窗口"""
+        if webview.windows:
+            webview.windows[0].destroy()
+        return {"status": "success"}
+
 # 挂载静态文件
 app.mount("/static", StaticFiles(directory="src/frontend"), name="static")
 
 # 数据模型
 class ConfigUpdate(BaseModel):
     key: str
-    value: str
+    value: Any
 
 # WebSocket管理
 async def broadcast(data: dict):
@@ -93,7 +109,25 @@ async def get_config():
 async def update_config(update: ConfigUpdate):
     """更新配置"""
     config.update(update.key, update.value)
+    print(f"更新配置: {update.key} = {update.value}")
     return {"status": "success", "config": config.config}
+
+# 新增窗口控制API端点
+@app.post("/api/window/minimize")
+async def minimize_window():
+    """最小化窗口API"""
+    if webview.windows:
+        webview.windows[0].minimize()
+        return {"status": "success"}
+    return {"status": "error", "message": "No window found"}
+
+@app.post("/api/window/close")
+async def close_window():
+    """关闭窗口API"""
+    if webview.windows:
+        webview.windows[0].destroy()
+        return {"status": "success"}
+    return {"status": "error", "message": "No window found"}
 
 # 启动后台任务
 async def start_background_tasks():
@@ -159,4 +193,3 @@ async def start_background_tasks():
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(start_background_tasks())
-    
