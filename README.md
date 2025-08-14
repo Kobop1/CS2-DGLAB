@@ -53,5 +53,5 @@
 uv add pyinstaller --dev
 
 # 打包
-uv run pyinstaller --onefile --name "CS2&DGLab" --add-data "src/frontend:src/frontend" src/desktop.py
+uv run pyinstaller "CS2&DGLab.spec"
 打包后的可执行文件会生成在`dist`目录下。

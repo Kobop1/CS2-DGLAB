@@ -1,4 +1,6 @@
 import asyncio
+import os
+import sys
 from pydglab_ws import (
     Channel,
     RetCode,
@@ -7,6 +9,14 @@ from pydglab_ws import (
     StrengthData,
     FeedbackButton
 )
+
+def get_resource_path(relative_path):
+    """获取资源文件的绝对路径"""
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller打包后的路径
+        return os.path.join(sys._MEIPASS, relative_path)
+    # 开发环境路径
+    return os.path.join(os.path.abspath("."), relative_path)
 
 class DGLabController:
     def __init__(self, ip_address: str):
@@ -92,4 +102,3 @@ class DGLabController:
     async def send_command(self, cmd):
         """发送指令到队列"""
         await self.queue.put(cmd)
-    

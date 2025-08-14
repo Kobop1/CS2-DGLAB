@@ -13,6 +13,8 @@ import json
 from pydantic import BaseModel
 from typing import Any
 import webview
+import os
+import sys
 
 app = FastAPI(title="CS2&DGLab 控制中心")
 
@@ -27,7 +29,13 @@ app.add_middleware(
 
 # 配置管理
 config = ConfigManager()
-
+def get_resource_path(relative_path):
+    """获取资源文件的绝对路径"""
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller打包后的路径
+        return os.path.join(sys._MEIPASS, relative_path)
+    # 开发环境路径
+    return os.path.join(os.path.abspath("."), relative_path)
 # 全局状态
 class AppState:
     def __init__(self):
@@ -59,8 +67,11 @@ class WindowApi:
             webview.windows[0].destroy()
         return {"status": "success"}
 
-# 挂载静态文件
-app.mount("/static", StaticFiles(directory="src/frontend"), name="static")
+frontend_path = get_resource_path("src/frontend")
+if os.path.exists(frontend_path):
+    app.mount("/static", StaticFiles(directory=frontend_path), name="static")
+else:
+    print(f"警告: 前端资源目录不存在: {frontend_path}")
 
 # 数据模型
 class ConfigUpdate(BaseModel):
@@ -99,6 +110,7 @@ async def get_status():
         "qrcode_available": state.qrcode_path != "",
         "connected": state.dglab and state.dglab.is_connected
     }
+
 
 @app.get("/api/qrcode")
 async def get_qrcode():
@@ -149,13 +161,18 @@ async def start_background_tasks():
         await asyncio.sleep(0.1)
         retry_count += 1
     
-    # 生成二维码
     if state.dglab.client:
         qrcode_url = state.dglab.client.get_qrcode(ip_address)
     else:
         qrcode_url = ip_address
     
-    state.qrcode_path = generate_qrcode(qrcode_url, "src/frontend/temp_qrcode.png")
+    # 确保前端目录存在
+    frontend_dir = get_resource_path("src/frontend")
+    if not os.path.exists(frontend_dir):
+        os.makedirs(frontend_dir)
+    
+    qrcode_path = os.path.join(frontend_dir, "temp_qrcode.png")
+    state.qrcode_path = generate_qrcode(qrcode_url, qrcode_path)
     
     # 查找CS2路径并配置
     try:

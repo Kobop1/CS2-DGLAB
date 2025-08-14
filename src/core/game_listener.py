@@ -2,7 +2,7 @@ from aiohttp import web
 import asyncio
 
 class GameStateListener:
-    def __init__(self, config_manager, command_queue, dglab_controller):
+    def __init__(self, config_manager, command_queue,dglab_controller):
         self.config = config_manager
         self.command_queue = command_queue
         self.health = 0  # 初始血量
@@ -10,7 +10,6 @@ class GameStateListener:
         self.player_status = "正常"
         self.round_status = "准备中"
         self.dglab_controller = dglab_controller
-        self.steamid = None  
 
     def _create_app(self):
         """创建HTTP应用"""
@@ -35,16 +34,8 @@ class GameStateListener:
                 return web.json_response({"status": "error", "message": "空请求"}, status=400)
 
             # 验证数据格式
-            if "player" not in data or "map" not in data or "provider" not in data:
+            if "player" not in data or "map" not in data:
                 return web.json_response({"status": "error", "message": "数据格式错误"}, status=400)
-            
-            # 验证 SteamID 一致性
-            if data["provider"]["steamid"] != data["player"]["steamid"]:
-                return web.json_response({"status": "error", "message": "SteamID 不匹配"}, status=400)
-            
-            # 设置 steamid（首次）
-            if self.steamid is None:
-                self.steamid = data["provider"]["steamid"]
             
             # 处理玩家状态
             await self._process_player_state(data)
@@ -95,29 +86,23 @@ class GameStateListener:
             self.health = 100  # 重置血量
         else:
             self.health = now_health
-
-        # 处理回合结束
         if "round" in data:
             if data["round"]["phase"] == "over":
                 await self.command_queue.put({"type": "strlse", "data": 100})
-        
-        # 处理游戏结束
-        if data["map"]["phase"] == "gameover":
-            await self.command_queue.put({"type": "strlse", "data": 100})
-
+            # 处理游戏结束
+            if data["map"]["phase"] == "gameover":
+                await self.command_queue.put({"type": "strlse", "data": 100})
     async def _handle_health_change(self, new_health):
         health_loss = self.health - new_health
         base_ratio = int(health_loss * self.config.hit_strength)  # 这是相对比例（如18）
 
-        # 2. 按设备最大强度转换为实际值（比例映射：18% 对应 最大强度的 18%）
-        # 例如：最大强度A为200时，18% → 36；最大强度A为100时，18% → 18
+
         strength_a = int(base_ratio * self.dglab_controller.max_strength_A / 100)
         strength_b = int(base_ratio * self.dglab_controller.max_strength_B / 100)
 
-        # 3. 确保强度不超过最大限制（避免计算误差）
         strength_a = min(strength_a, self.dglab_controller.max_strength_A)
         strength_b = min(strength_b, self.dglab_controller.max_strength_B)
-        # 发送受伤振动
+
         await self.command_queue.put({
             "type": "pluse", 
             "data": self.config.pulse_data["受伤"]
@@ -155,3 +140,4 @@ class GameStateListener:
         # 更新回合状态
         if "round" in data:
             self.round_status = data["round"]["phase"]
+    

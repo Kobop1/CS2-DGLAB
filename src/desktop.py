@@ -4,9 +4,19 @@ import uvicorn
 from src.api.main import app
 import multiprocessing
 import os
+import sys
+
+def get_resource_path(relative_path):
+    """获取资源文件的绝对路径"""
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller打包后的路径
+        return os.path.join(sys._MEIPASS, relative_path)
+    # 开发环境路径
+    return os.path.join(os.path.abspath("."), relative_path)
+
 def run_server():
     """在单独线程中运行FastAPI服务器"""
-    frontend_dir = os.path.join(os.path.dirname(__file__), 'frontend')
+    frontend_dir = get_resource_path(os.path.join('src', 'frontend'))
     if not os.path.exists(frontend_dir):
         os.makedirs(frontend_dir)
         
@@ -14,7 +24,8 @@ def run_server():
         app,
         host="127.0.0.1",
         port=8000,
-        log_level="warning"
+        log_level="warning",
+        reload=False
     )
 
 def start_desktop_app():
@@ -46,4 +57,3 @@ def start_desktop_app():
 if __name__ == "__main__":
     multiprocessing.freeze_support()
     start_desktop_app()
-    
