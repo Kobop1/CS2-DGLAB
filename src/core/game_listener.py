@@ -36,10 +36,11 @@ class GameStateListener:
             # 验证数据格式
             if "player" not in data or "map" not in data:
                 return web.json_response({"status": "error", "message": "数据格式错误"}, status=400)
-            
-            # 处理玩家状态
-            await self._process_player_state(data)
-            return web.json_response({"status": "success"})
+            #必须为当前玩家状态才处理
+            if data["provider"]["steamid"] == data["player"]["steamid"]:
+                # 处理玩家状态
+                await self._process_player_state(data)
+                return web.json_response({"status": "success"})
         except Exception as e:
             print(f"处理游戏状态出错: {e}")
             return web.json_response({"status": "error", "message": str(e)}, status=500)
