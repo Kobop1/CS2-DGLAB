@@ -120,7 +120,24 @@ async def get_qrcode():
 @app.get("/api/config")
 async def get_config():
     """获取配置"""
-    return config.config
+    # 确保返回的配置值是正确的类型
+    config_data = config.config.copy()
+    
+    # 确保数值类型的配置项是正确的类型
+    numeric_fields = ["hit", "voice_A", "voice_B", "is_voice", "enable_hit", 
+                      "enable_flash", "enable_burn", "enable_smoke", "enable_death",
+                      "fixed_mode_strength", "challenge_mode_initial_strength",
+                      "challenge_mode_kill_reduction", "challenge_mode_death_boost"]
+    
+    for field in numeric_fields:
+        if field in config_data:
+            # 尝试转换为整数，如果失败则保持原值
+            try:
+                config_data[field] = int(config_data[field])
+            except (ValueError, TypeError):
+                pass
+    
+    return config_data
 
 @app.post("/api/config")
 async def update_config(update: ConfigUpdate):
