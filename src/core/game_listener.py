@@ -44,7 +44,6 @@ class GameStateListener:
             #必须为当前玩家状态才处理
             if data["provider"]["steamid"] == data["player"]["steamid"]:
                 # 处理玩家状态
-                print(data)
                 await self._process_player_state(data)
                 return web.json_response({"status": "success"})
         except Exception as e:

@@ -389,18 +389,18 @@
             ]
         ]
     },
-    "hit": "100",
+    "hit": 100,
     "is_voice": 0,
-    "voice_A": "50",
-    "voice_B": "50",
+    "voice_A": 50,
+    "voice_B": 50,
     "enable_hit": 1,
     "enable_flash": 1,
     "enable_smoke": 1,
     "enable_burn": 1,
     "enable_death": 1,
-    "mode": "challenge",
-    "fixed_mode_strength": "15",
-    "challenge_mode_initial_strength": "30",
-    "challenge_mode_kill_reduction": "10",
-    "challenge_mode_death_boost": "20"
+    "mode": "normal",
+    "fixed_mode_strength": 15,
+    "challenge_mode_initial_strength": 30,
+    "challenge_mode_kill_reduction": 10,
+    "challenge_mode_death_boost": 20
 }
