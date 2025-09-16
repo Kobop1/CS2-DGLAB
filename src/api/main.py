@@ -9,6 +9,7 @@ from src.config.config_manager import ConfigManager
 from src.utils.network import get_local_ip
 from src.utils.qrcode import generate_qrcode
 from src.utils.cs2_path import find_cs2_install_path, setup_cs2_gamestate_cfg
+from src.utils.network import get_local_ip, get_network_interfaces, get_local_ip_by_interface
 import json
 from pydantic import BaseModel
 from typing import Any
@@ -162,7 +163,43 @@ async def close_window():
         webview.windows[0].destroy()
         return {"status": "success"}
     return {"status": "error", "message": "No window found"}
+@app.get("/api/network/interfaces")
+async def get_network_interfaces_list():
+    """获取网络接口列表"""
+    try:
+        interfaces = get_network_interfaces()
+        print(interfaces)
+        return {"status": "success", "interfaces": interfaces}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
+@app.post("/api/network/interface")
+async def set_network_interface(data: dict):
+    """设置网络接口"""
+    try:
+        interface = data.get("interface")
+        if not interface:
+            return {"status": "error", "message": "未指定网络接口"}
+        
+        # 保存到配置中
+        config.update("network_interface", interface)
+        return {"status": "success", "message": "网络接口设置成功"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/network/current")
+async def get_current_network():
+    """获取当前使用的网络接口"""
+    try:
+        # 从配置中获取网络接口设置
+        interface = config.get("network_interface")
+        if interface:
+            ip = get_local_ip_by_interface(interface)
+        else:
+            ip = get_local_ip()
+        return {"status": "success", "ip": ip, "interface": interface}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 # 启动后台任务
 async def start_background_tasks():
     """启动所有后台任务"""

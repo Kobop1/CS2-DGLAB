@@ -266,7 +266,6 @@
                         </div>
                     </div>
                 </section>
-
                 <!-- 参数配置 section -->
                 <section id="config-section" class="hidden">
                     <div class="card max-w-2xl">
@@ -519,31 +518,81 @@
 
                 <!-- 连接 section -->
                 <section id="connection-section" class="hidden">
-                    <div class="card max-w-md mx-auto">
-                        <h3 class="text-lg font-semibold mb-6 text-center flex items-center justify-center gap-2">
-                            <i class="fa fa-qrcode text-primary"></i>
-                            设备连接
-                        </h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- 二维码卡片 -->
+                        <div class="card">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                                <i class="fa fa-qrcode text-primary"></i>
+                                设备连接
+                            </h3>
 
-                        <div class="flex flex-col items-center">
-                            <div id="qrcode-container"
-                                class="mb-6 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-                                <img id="qrcode-image" src="" alt="DGLab连接二维码" class="max-w-full h-auto">
+                            <div class="flex flex-col items-center">
+                                <div id="qrcode-container"
+                                    class="mb-6 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                                    <img id="qrcode-image" src="" alt="DGLab连接二维码" class="max-w-full h-auto">
+                                </div>
+
+                                <p class="text-sm text-gray-500 text-center mb-4">
+                                    使用DG-Lab App扫描上方二维码进行连接
+                                </p>
+                                <div class="bg-gray-100 p-3 rounded-lg w-full">
+                                    <p class="text-xs text-gray-500 mb-1">连接地址:</p>
+                                    <p class="font-mono text-sm break-all" id="connection-url"></p>
+                                </div>
+                                <button id="refresh-qrcode"
+                                    class="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 transition-all flex items-center gap-2 mt-4">
+                                    <i class="fa fa-refresh"></i>
+                                    <span>刷新二维码</span>
+                                </button>
                             </div>
+                        </div>
 
-                            <p class="text-sm text-gray-500 text-center mb-4">
-                                使用DG-Lab App扫描上方二维码进行连接
-                            </p>
-
-                            <button id="refresh-qrcode"
-                                class="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary/5 transition-all flex items-center gap-2">
-                                <i class="fa fa-refresh"></i>
-                                <span>刷新二维码</span>
-                            </button>
+                        <!-- 网络设置卡片 -->
+                        <div class="card">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                                <i class="fa fa-network-wired text-primary"></i>
+                                网络设置
+                            </h3>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">
+                                        网络接口选择
+                                    </label>
+                                    <select id="network-interface-select" 
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all">
+                                        <option value="">自动选择</option>
+                                    </select>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        如果连接有问题，请选择正确的网络接口
+                                    </p>
+                                </div>
+                                
+                                <div class="pt-2">
+                                    <button id="refresh-network-interfaces" 
+                                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
+                                        <i class="fa fa-refresh"></i>
+                                        刷新接口列表
+                                    </button>
+                                </div>
+                                
+                                <div class="pt-4 border-t border-gray-200">
+                                    <h4 class="font-medium mb-2">当前连接信息</h4>
+                                    <div class="bg-gray-50 p-3 rounded-lg">
+                                        <p class="text-sm">
+                                            <span class="text-gray-500">接口:</span>
+                                            <span id="current-interface" class="ml-2">自动选择</span>
+                                        </p>
+                                        <p class="text-sm mt-1">
+                                            <span class="text-gray-500">地址:</span>
+                                            <span id="current-ip" class="ml-2 font-mono"></span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
-
                 <!-- 支持作者 section -->
                 <section id="support-section" class="hidden">
                     <div class="card max-w-2xl mx-auto">
@@ -1097,6 +1146,95 @@
                 }
             }, 3000);
         });
+        // 网络接口相关功能
+        async function loadNetworkInterfaces() {
+            try {
+                const response = await fetch('/api/network/interfaces');
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    const select = document.getElementById('network-interface-select');
+                    // 保存当前选择
+                    const currentValue = select.value;
+
+                    // 清空选项（除了默认选项）
+                    select.innerHTML = '<option value="">自动选择</option>';
+
+                    // 添加网络接口选项
+                    data.interfaces.forEach(iface => {
+                        const option = document.createElement('option');
+                        option.value = iface.name;
+                        option.textContent = `${iface.name} (${iface.address})`;
+                        select.appendChild(option);
+                    });
+
+                    // 恢复之前的选择
+                    select.value = currentValue;
+                }
+            } catch (error) {
+                console.error('加载网络接口失败:', error);
+            }
+        }
+
+        async function loadCurrentNetwork() {
+            try {
+                const response = await fetch('/api/network/current');
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    document.getElementById('current-interface').textContent =
+                        data.interface || '自动选择';
+                    document.getElementById('current-ip').textContent = data.ip;
+                }
+            } catch (error) {
+                console.error('加载当前网络信息失败:', error);
+            }
+        }
+
+        async function setNetworkInterface(interfaceName) {
+            try {
+                const response = await fetch('/api/network/interface', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ interface: interfaceName })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    // 重新加载当前网络信息
+                    loadCurrentNetwork();
+                    // 重新生成二维码
+                    generateQRCode();
+                } else {
+                    console.error('设置网络接口失败:', data.message);
+                }
+            } catch (error) {
+                console.error('设置网络接口失败:', error);
+            }
+        }
+
+        // 初始化网络接口相关功能
+        document.addEventListener('DOMContentLoaded', function () {
+            // 加载网络接口列表
+            loadNetworkInterfaces();
+            loadCurrentNetwork();
+
+            // 刷新网络接口按钮事件
+            document.getElementById('refresh-network-interfaces').addEventListener('click', function () {
+                loadNetworkInterfaces();
+                loadCurrentNetwork();
+            });
+
+            // 网络接口选择变化事件
+            document.getElementById('network-interface-select').addEventListener('change', function () {
+                setNetworkInterface(this.value);
+            });
+        });
+
+        // ... existing code ...
     </script>
 </body>
 
