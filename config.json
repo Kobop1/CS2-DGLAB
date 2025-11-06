@@ -403,5 +403,5 @@
     "challenge_mode_initial_strength": 30,
     "challenge_mode_kill_reduction": 10,
     "challenge_mode_death_boost": 20,
-    "network_interface": "WLAN"
+    "network_interface": "Loopback Pseudo-Interface 1"
 }

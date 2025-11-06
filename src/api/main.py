@@ -183,6 +183,27 @@ async def set_network_interface(data: dict):
         
         # 保存到配置中
         config.update("network_interface", interface)
+        
+        # 获取新IP地址并更新二维码
+        if interface:
+            ip_address = get_local_ip_by_interface(interface)
+        else:
+            ip_address = get_local_ip()
+            
+        # 更新DGLab控制器中的IP地址
+        if state.dglab:
+            state.dglab.ip = ip_address.replace("ws://", "").replace(":5678", "")
+            
+        # 生成新的二维码
+        qrcode_url = state.dglab.client.get_qrcode(ip_address) if state.dglab and state.dglab.client else ip_address
+        print(qrcode_url)
+        # 确保前端目录存在
+        frontend_dir = get_resource_path("src/frontend")
+        if not os.path.exists(frontend_dir):
+            os.makedirs(frontend_dir)
+            
+        qrcode_path = os.path.join(frontend_dir, "temp_qrcode.png")
+        state.qrcode_path = generate_qrcode(qrcode_url, qrcode_path)
         return {"status": "success", "message": "网络接口设置成功"}
     except Exception as e:
         return {"status": "error", "message": str(e)}

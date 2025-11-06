@@ -18,7 +18,7 @@ def get_network_interfaces() -> list:
     
     for interface_name, interface_addresses in addresses.items():
         for address in interface_addresses:
-            if address.family == socket.AF_INET and not address.address.startswith("192."):
+            if address.family == socket.AF_INET :
                 interfaces.append({
                     "name": interface_name,
                     "address": address.address
@@ -32,7 +32,7 @@ def get_local_ip_by_interface(interface_name: str) -> str:
     
     if interface_name in addresses:
         for address in addresses[interface_name]:
-            if address.family == socket.AF_INET and not address.address.startswith("192."):
+            if address.family == socket.AF_INET :
                 return f"ws://{address.address}:5678"
     
     # 如果找不到指定接口，回退到默认方法

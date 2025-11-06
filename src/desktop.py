@@ -77,7 +77,6 @@ def start_desktop_app():
         "min_size": (800, 600),
         "frameless": True,
         "easy_drag": True 
-        
     }
     
     # 创建窗口并加载本地页面
