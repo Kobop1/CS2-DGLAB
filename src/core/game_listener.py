@@ -152,9 +152,27 @@ class GameStateListener:
         if "state" in player_data and "round_kills" in player_data["state"]:
             current_kills = player_data["state"]["round_kills"]
             if current_kills > self.last_kills:
-                # 玩家击杀增加，减少强度
-                kill_reduction = int(self.config.get("challenge_mode_kill_reduction", 10))
-                self.challenge_mode_current_strength = max(10, self.challenge_mode_current_strength - kill_reduction)
+                
+                # 玩家击杀增加，减少强度（基于当前最大强度的百分比）
+                kill_reduction_percent = int(self.config.get("challenge_mode_kill_reduction", 10))
+                # 计算基于当前最大强度A的减少量
+                kill_reduction_a = int(self.dglab_controller.max_strength_A * kill_reduction_percent / 100)
+                # 计算基于当前最大强度B的减少量
+                kill_reduction_b = int(self.dglab_controller.max_strength_B * kill_reduction_percent / 100)
+                
+                # 转换为当前强度的百分比减少
+                if self.dglab_controller.max_strength_A > 0:
+                    actual_reduction_percent_a = int((kill_reduction_a / self.dglab_controller.max_strength_A) * 100)
+                else:
+                    actual_reduction_percent_a = kill_reduction_percent
+                    
+                if self.dglab_controller.max_strength_B > 0:
+                    actual_reduction_percent_b = int((kill_reduction_b / self.dglab_controller.max_strength_B) * 100)
+                else:
+                    actual_reduction_percent_b = kill_reduction_percent
+                
+                actual_reduction_percent = max(actual_reduction_percent_a, actual_reduction_percent_b)
+                self.challenge_mode_current_strength = max(10, self.challenge_mode_current_strength - actual_reduction_percent)
                 await self._set_strength_by_percentage(self.challenge_mode_current_strength)
                 self.last_kills = current_kills
                 self.kills = current_kills
@@ -312,9 +330,27 @@ class GameStateListener:
         })
         await asyncio.sleep(1)
         
-        # 挑战模式下死亡，增加强度
-        death_boost = int(self.config.get("challenge_mode_death_boost", 20))
-        self.challenge_mode_current_strength = min(100, self.challenge_mode_current_strength + death_boost)
+        # 挑战模式下死亡，增加强度（基于当前最大强度的百分比）
+        death_boost_percent = int(self.config.get("challenge_mode_death_boost", 20))
+        # 计算基于当前最大强度A的增加量
+        death_boost_a = int(self.dglab_controller.max_strength_A * death_boost_percent / 100)
+        # 计算基于当前最大强度B的增加量
+        death_boost_b = int(self.dglab_controller.max_strength_B * death_boost_percent / 100)
+        
+        # 转换为当前强度的百分比增加
+        if self.dglab_controller.max_strength_A > 0:
+            actual_boost_percent_a = int((death_boost_a / self.dglab_controller.max_strength_A) * 100)
+        else:
+            actual_boost_percent_a = death_boost_percent
+            
+        if self.dglab_controller.max_strength_B > 0:
+            actual_boost_percent_b = int((death_boost_b / self.dglab_controller.max_strength_B) * 100)
+        else:
+            actual_boost_percent_b = death_boost_percent
+        
+        # 使用两个通道中较大的增加百分比
+        actual_boost_percent = max(actual_boost_percent_a, actual_boost_percent_b)
+        self.challenge_mode_current_strength = min(100, self.challenge_mode_current_strength + actual_boost_percent)
         await self._set_strength_by_percentage(self.challenge_mode_current_strength)
             
         await asyncio.sleep(5)
