@@ -9,6 +9,7 @@ from src.config.config_manager import ConfigManager
 from src.utils.network import get_local_ip
 from src.utils.qrcode import generate_qrcode
 from src.utils.cs2_path import find_cs2_install_path, setup_cs2_gamestate_cfg
+from src.utils.network import get_local_ip, get_network_interfaces, get_local_ip_by_interface
 import json
 from pydantic import BaseModel
 from typing import Any
@@ -162,7 +163,64 @@ async def close_window():
         webview.windows[0].destroy()
         return {"status": "success"}
     return {"status": "error", "message": "No window found"}
+@app.get("/api/network/interfaces")
+async def get_network_interfaces_list():
+    """获取网络接口列表"""
+    try:
+        interfaces = get_network_interfaces()
+        print(interfaces)
+        return {"status": "success", "interfaces": interfaces}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
+@app.post("/api/network/interface")
+async def set_network_interface(data: dict):
+    """设置网络接口"""
+    try:
+        interface = data.get("interface")
+        if not interface:
+            return {"status": "error", "message": "未指定网络接口"}
+        
+        # 保存到配置中
+        config.update("network_interface", interface)
+        
+        # 获取新IP地址并更新二维码
+        if interface:
+            ip_address = get_local_ip_by_interface(interface)
+        else:
+            ip_address = get_local_ip()
+            
+        # 更新DGLab控制器中的IP地址
+        if state.dglab:
+            state.dglab.ip = ip_address.replace("ws://", "").replace(":5678", "")
+            
+        # 生成新的二维码
+        qrcode_url = state.dglab.client.get_qrcode(ip_address) if state.dglab and state.dglab.client else ip_address
+        print(qrcode_url)
+        # 确保前端目录存在
+        frontend_dir = get_resource_path("src/frontend")
+        if not os.path.exists(frontend_dir):
+            os.makedirs(frontend_dir)
+            
+        qrcode_path = os.path.join(frontend_dir, "temp_qrcode.png")
+        state.qrcode_path = generate_qrcode(qrcode_url, qrcode_path)
+        return {"status": "success", "message": "网络接口设置成功"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/api/network/current")
+async def get_current_network():
+    """获取当前使用的网络接口"""
+    try:
+        # 从配置中获取网络接口设置
+        interface = config.get("network_interface")
+        if interface:
+            ip = get_local_ip_by_interface(interface)
+        else:
+            ip = get_local_ip()
+        return {"status": "success", "ip": ip, "interface": interface}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 # 启动后台任务
 async def start_background_tasks():
     """启动所有后台任务"""
