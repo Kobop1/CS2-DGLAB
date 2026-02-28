@@ -30,3 +30,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.uv]
 prerelease = "disallow"
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.18.0",
+]
